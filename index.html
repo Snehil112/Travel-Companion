@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Companion</title>
+    <link rel="stylesheet" href="../static/styles.css" />
+</head>
+<body>
+     <div class="container">
+        <header>
+            <h1>Travel Companion</h1>
+        </header>
+        <main>
+            <section class="form-section">
+              <!--Weather form Section -->
+                <form id="weather-form">
+                    <h2>Get Weather</h2>
+                    <div class="form-group">
+                        <label for="city">City:</label>
+                        <input type="text" id="city" name="city" required>
+                    </div>
+                    <button type="submit">Get Weather</button>
+                </form>
+            </section>
+            <section id="loading" style="display: none;">Loading...</section>
+            <section id="weather-results" class="results"></section>
+            <section id="photo-results" class="results"></section>
+        </main>
+    </div>
+
+    <script>
+
+//Event listener for the weather form submission
+    document.getElementById('weather-form').onsubmit = function(e) {
+    e.preventDefault();
+    document.getElementById('loading').style.display = 'block';
+    const city = encodeURIComponent(document.getElementById('city').value);
+    const weatherUrl = `/get_weather?city=${city}`;
+      			
+//fetching weather data
+      fetch(weatherUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(weatherData => {
+            const resultsDiv = document.getElementById('weather-results');
+            resultsDiv.innerHTML = '';  
+            const weatherDiv = document.createElement('div');
+            weatherDiv.className = 'result-item';
+            weatherDiv.innerHTML = `
+                <p><strong>City:</strong> ${weatherData.name}</p>
+                <p><strong>Temperature:</strong> ${weatherData.main.temp} &deg;C</p>
+                <p><strong>Weather:</strong> ${weatherData.weather[0].description}</p>
+                <p><strong>Humidity:</strong> ${weatherData.main.humidity}%</p>
+                <p><strong>Wind Speed:</strong> ${weatherData.wind.speed} m/s</p>
+            `;
+            resultsDiv.appendChild(weatherDiv);
+
+            // Fetching photos from Flickr based on weather condition
+            const weatherCondition = weatherData.weather[0].description;
+	    const photoUrl = `/get_photos?tags=${encodeURIComponent(weatherCondition)}`;
+
+            return fetch(photoUrl);
+	   })
+	   .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+       	 })
+	 .then(photoData => {
+            document.getElementById('loading').style.display = 'none';            
+	    const photoResultsDiv = document.getElementById('photo-results');
+            photoResultsDiv.innerHTML = '';  
+            photoData.photos.photo.forEach(photo => {
+                const photoDiv = document.createElement('div');
+                photoDiv.className = 'result-item';
+                photoDiv.innerHTML = `
+                    <img src="https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_q.jpg" alt="${photo.title}">
+                `;
+                photoResultsDiv.appendChild(photoDiv);
+            });
+          })
+          .catch(error => {
+	    document.getElementById('loading').style.display = 'none';
+            console.error('There was a problem with the fetch operation:', error);
+            const resultsDiv = document.getElementById('weather-results');
+            resultsDiv.innerHTML = '<p>Error fetching weather data. Please try again later.</p>';
+	    const photoResultsDiv = document.getElementById('photo-results');
+            photoResultsDiv.innerHTML = '<p>Error fetching photos. Please try again later.</p>';
+            
+          });
+    };
+    </script>
+</body>
+</html>
