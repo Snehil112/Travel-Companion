@@ -4,3 +4,4 @@
 scalable, low-latency access.
 • Reduced load times by 40% and enabled seamless user experience during traffic spikes through optimized API calls and stateless
 deployment.
+
